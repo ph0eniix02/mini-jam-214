@@ -8,14 +8,14 @@
 #define WINDOW_WIDTH 960
 #define WINDOW_HEIGHT 540
 #define TILE_SIZE 16
-#define N_TILES_ROW (int) (WINDOW_WIDTH / TILE_SIZE)
-#define N_TILES_COL (int) (WINDOW_HEIGHT / TILE_SIZE)
+#define N_TILES_ROW (int) (SRC_WIDTH / TILE_SIZE)
+#define N_TILES_COL (int) (SRC_HEIGHT / TILE_SIZE)
 #define N_TILES (N_TILES_ROW * N_TILES_COL)
 
 // Yes, I know there is a standard bool header. I'm using this.
 typedef enum { FALSE, TRUE } Bool;
 
-typedef enum { NORTH, SOUTH, EAST, WEST } Direction;
+typedef enum { NORTH, EAST, SOUTH, WEST } Direction;
 
 typedef struct {
 	Texture2D tex;
@@ -50,14 +50,33 @@ int main(void)
 	}
 	
 	Vector2 cursor_pos = {0};
+	int active_tile_index = 0;
+	int last_active_tile_index = -1;
 
 	while (!WindowShouldClose())
 	{
-		cursor_pos = (Vector2) {GetMousePosition().x / 3, GetMousePosition().y / 3};
+		if (GetMousePosition().x < WINDOW_WIDTH && GetMousePosition().y < WINDOW_HEIGHT) {
+			cursor_pos = (Vector2) {GetMousePosition().x / 3, GetMousePosition().y / 3};
+		}
 
 		// Could optimize using sorting algorithim
-		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-			tiles[(int) (cursor_pos.y / TILE_SIZE) * N_TILES_ROW + (int) (cursor_pos.x / TILE_SIZE)].conveyer = TRUE;
+		// Must use the index, because simply getting the active tile makes a copy.
+		// I wonder if I could get the pointer to the active tile. However, this works
+		// for now.
+		active_tile_index = (int) (cursor_pos.y / TILE_SIZE) * N_TILES_ROW + (int) (cursor_pos.x / TILE_SIZE);
+		if (IsMouseButtonDown(MOUSE_LEFT_BUTTON) && active_tile_index != last_active_tile_index) {
+			if (tiles[active_tile_index].conveyer != TRUE) {
+				tiles[active_tile_index].conveyer = TRUE;
+			} else if (tiles[active_tile_index].conveyer == TRUE) {
+				tiles[active_tile_index].conveyer = FALSE;
+			}
+			last_active_tile_index = active_tile_index;
+		} else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) && tiles[active_tile_index].conveyer == TRUE) {
+			if (tiles[active_tile_index].dir < 3) {
+				tiles[active_tile_index].dir++;
+			} else {
+				tiles[active_tile_index].dir = NORTH;
+			}
 		}
 		BeginTextureMode(target);
 			ClearBackground(CORNFLOWER_BLUE);
