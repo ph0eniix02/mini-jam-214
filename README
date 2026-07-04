@@ -1,0 +1,57 @@
+Idea:
+Factory sorting game where you use machines to prevent the situation getting
+out of hand (ie, packages going where they're not supposed to). As of right now,
+these packages will be fireworks. 
+
+Brainstorm:
+- Conveyer belts
+X Robots (Animate using sine waves) -> might be out of scope
+- Gunpowder randomly explodes, forcing you to change the pathways
+- Operate on strict tiles, using an array to determine which tiles go in which
+direction and which tiles are useable.
+- Up to three difficulty levels, involving one path, two paths, and three paths,
+with each path transporting a different kind of firework.
+
+Todo:
+[ ] Create grid
+	- [ ] Scale up resolution of grid
+	- [ ] Toggle tile availability
+[ ] Conveyers
+	- [ ] Draw path
+	- [ ] Instantiate belts
+	- [ ] Destroy belts
+	- [ ] Move crates
+[ ] Fireworks/Crates
+	- [ ] Spawn
+	- [ ] Despawn
+	- [ ] Explode
+[ ] Win Condition
+	- [ ] Timer
+	- [ ] Counter
+	- [ ] Reset Game
+[ ] Menu
+	- [ ] Game State
+	- [ ] Buttons
+[ ] Polish
+	- [ ] Art
+		- [ ] Conveyer
+		- [ ] Firework
+		- [ ] Start/End Point
+		- [ ] Timer
+		- [ ] Buttons
+		- [ ] Menu Background
+		- [ ] Animate fireworks between tiles
+	- [ ] Sound
+		- [ ] SFX
+			- [ ] Instantiate Effect
+			- [ ] Explosion Effect
+			- [ ] Collection Effect
+			- [ ] Conveyer Idle
+		- [ ] Game Music
+			- [ ] Level 1
+			- [ ] Level 2
+			- [ ] Level 3
+		- [ ] Menu Music
+	- [ ] Web build
+
+Damn. That's a lot

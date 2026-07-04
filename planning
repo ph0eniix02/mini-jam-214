@@ -1,0 +1,36 @@
+Code Planning:
+	Create grid:
+		- Use rendertarget to scale up screen and scale mouse down respectively.
+		- Lock to 960x540
+		- Use a large array of tile structs to organize data. I think a 1-dimensional array
+		will make the most sense
+	Conveyers:
+		- Check if mouse is down and if so, change a boolean field of the selected
+		tile struct to true, unless of course, a tile is already active. Inverse
+		action for destroying a belt. Right click to
+		create a conveyer, left click to destroy, middle click or space bar to
+		change the direction
+		- Each tile struct will also have a direction ENUM? that tells the fireworks
+		which direction they'll move. 4 directions obviously.
+	Fireworks:
+		- Will take their position based off of the middle of their hitbox, and will
+		move accordingly from tile to tile.
+		- There will be a firework struct, along with an array the holds all the fireworks.
+		- This array will not be dynamically allocated, rather there will be a maximum
+		number of fireworks (the number of tiles on the screen) and they will have
+		a boolean field that stores whether or not the firework is actively moving.
+		- Along with the obvious two position fields, the firework struct will have
+		another boolean field, that decides if it's a bomb or not. This field will be
+		reset each time the firework resets back to spawn, and will be set randomly with
+		a to-be-determined probability after the first several fireworks of the level.
+		- *** I should be able to just loop through the array of fireworks to find which
+		are active and should be rendered, but it would be a good exercise post-jam to
+		optimize this. ***
+	Win Condition:
+		- Simply tracks the amount of fireworks that reach the correct destination
+		in a given amount of time (two minutes?)
+		- When the game is reset, all tiles should become empty, score and timer
+		should go to zero, all fireworks should become inactive.
+	Menu:
+	 	- There should be a gamestate enum that determines what should be happening.
+		- Button struct with a collision rect
