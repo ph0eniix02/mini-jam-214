@@ -161,7 +161,7 @@ int main(void)
 		if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON) == 0) last_active_tile_index = -1;
 
 		if (tiles[active_tile_index].spawner == FALSE && tiles[active_tile_index].collector == FALSE) {
-			if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON) && active_tile_index != last_active_tile_index && tiles[active_tile_index].conveyer != TRUE) {
+			if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON) && active_tile_index != last_active_tile_index && tiles[active_tile_index].conveyer != TRUE && tiles[active_tile_index].destroyed == FALSE) {
 				tiles[active_tile_index].conveyer = TRUE;
 				last_active_tile_index = active_tile_index;
 			} else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) && tiles[active_tile_index].conveyer == TRUE) {
@@ -359,6 +359,7 @@ int main(void)
 
 						// I think turning the texture messes it up a bit, might be rotated
 						// based on the texture, not the source rect.
+						// DrawTexturePro(item_tex, (Rectangle) {0, 0, TILE_SIZE, TILE_SIZE}, (Rectangle) {items[i].pos.x, items[i].pos.y, TILE_SIZE, TILE_SIZE}, (Vector2) { 0, 0 }, degree, WHITE);
 						DrawTexturePro(item_tex, (Rectangle) {0, 0, TILE_SIZE, TILE_SIZE}, (Rectangle) {items[i].pos.x, items[i].pos.y, TILE_SIZE, TILE_SIZE}, (Vector2) { 0, 0 }, 0.0f, WHITE);
 					} else {
 						DrawTexturePro(item_tex, (Rectangle) {TILE_SIZE * 3, 0, TILE_SIZE, TILE_SIZE}, (Rectangle) {items[i].pos.x, items[i].pos.y, TILE_SIZE, TILE_SIZE}, (Vector2) { 0, 0 }, 0.0f, WHITE);
