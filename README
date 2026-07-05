@@ -16,7 +16,7 @@ Todo:
 [X] Create grid
 	- [X] Scale up resolution of grid
 	- [X] Toggle tile availability
-[ ] Conveyers
+[X] Conveyers
 	- [X] Draw path
 	- [X] Instantiate belts
 	- [X] Destroy belts
@@ -34,14 +34,17 @@ Todo:
 	- [ ] Game State
 	- [ ] Buttons
 [ ] Polish
+	- [ ] Level 1
+	- [ ] Level 2
+	- [ ] Level 3?
 	- [ ] Art
-		- [ ] Conveyer
+		- [X] Conveyer
 		- [X] Firework
-		- [ ] Start/End Point
+		- [X] Start/End Point
 		- [ ] Timer
 		- [ ] Buttons
 		- [ ] Menu Background
-		- [ ] Animate fireworks between tiles
+		- [X] Animate fireworks between tiles
 	- [ ] Sound
 		- [ ] SFX
 			- [ ] Instantiate Effect

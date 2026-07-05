@@ -11,7 +11,7 @@
 #define WINDOW_HEIGHT 540
 #define TILE_SIZE 16
 #define N_TILES_ROW (int) (SRC_WIDTH / TILE_SIZE)
-#define N_TILES_COL (int) (SRC_HEIGHT / TILE_SIZE)
+#define N_TILES_COL (int) ((SRC_HEIGHT / TILE_SIZE) - 1)
 #define N_TILES (N_TILES_ROW * N_TILES_COL)
 
 // Yes, I know there is a standard bool header. I'm using this.
@@ -27,6 +27,7 @@ typedef struct {
 	Bool spawner;
 	Bool collector;
 	Direction dir;
+	int rand;
 } Tile;
 
 typedef struct {
@@ -48,12 +49,13 @@ typedef struct {
 } Level;
 
 void ResetItem(int, Level);
+void DrawTile(Texture2D, Vector2, int, int);
 
 Tile tiles[N_TILES] = {0};
 
 Item items[N_TILES] = {0};
 
-Level level_1 = {.spawners = {20}, .collectors = {200}, .paths = 1, .difficulty = 5};
+Level level_1 = {.spawners = {20}, .collectors = {180}, .paths = 1, .difficulty = 5};
 
 int score;
 float timer;
@@ -62,6 +64,10 @@ Vector2 cursor_pos;
 int active_tile_index;
 int last_active_tile_index;
 float degree;
+
+Texture2D item_tex;
+Image tile_img;
+Texture2D tile_tex;
 
 int main(void)
 {
@@ -76,14 +82,26 @@ int main(void)
 	target_src_rec = (Rectangle) {0, 0, SRC_WIDTH, -SRC_HEIGHT};
 	target_dst_rec = (Rectangle) {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
 
-	Texture2D item_tex = LoadTexture("assets/firework_sprites.png");
+	item_tex = LoadTexture("assets/firework_sprites.png");
 	// Move into seperate TileSetup function?
 	// Could load the texture in one line, but I'm pretty sure it's the same either
 	// way under the hood?
-	Image tile_img = LoadImage("assets/tile_sprites.png");
-	Texture2D tile_tex = LoadTextureFromImage(tile_img);
+	tile_img = LoadImage("assets/tile_sprites.png");
+	tile_tex = LoadTextureFromImage(tile_img);
 	for (int i = 0; i < N_TILES; i++) {
 		tiles[i].tex = tile_tex;
+		tiles[i].rand = GetRandomValue(0, 12); 
+		if (tiles[i].rand < 6) {
+			tiles[i].rand = 0;
+		} else if (tiles[i].rand < 9) {
+			tiles[i].rand = 1;
+		} else if (tiles[i].rand < 11) {
+			tiles[i].rand = 2;
+		} else if (tiles[i].rand < 12) {
+			tiles[i].rand = 3;
+		} else {
+			tiles[i].rand = 4;
+		}
 	}
 	
 	SetRandomSeed((int) GetTime());
@@ -173,6 +191,16 @@ int main(void)
 			if (items[i].active == TRUE) {
 				if (items[i].bomb == TRUE) {
 					items[i].time += GetFrameTime();
+					// Disarm bomb, currently also deletes tile
+					// if (CheckCollisionPointRec(cursor_pos, 
+					// 			(Rectangle) {
+					// 				items[i].pos.x, 
+					// 				items[i].pos.y,
+					// 				TILE_SIZE,
+					// 				TILE_SIZE})
+					// 		&& IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+					// 	ResetItem(i, cur_level);
+					// }
 				}
 				// Explode bomb
 				if (items[i].time > 10 && items[i].bomb == TRUE) {
@@ -201,13 +229,13 @@ int main(void)
 					// Fix for multiple collectors
 					switch (items[i].dir) {
 						case NORTH:
-							if (items[i].used_tile_i > 19) items[i].used_tile_i -= 20;
+							if (items[i].used_tile_i > N_TILES_ROW - 1) items[i].used_tile_i -= 20;
 							break;
 						case EAST:
 							if ((items[i].used_tile_i + 1) % N_TILES_ROW < 20) items[i].used_tile_i++;
 							break;
 						case SOUTH:
-							if (items[i].used_tile_i < 199) items[i].used_tile_i += 20;
+							if (items[i].used_tile_i < N_TILES - N_TILES_ROW - 1) items[i].used_tile_i += 20;
 							break;
 						case WEST:
 							if ((items[i].used_tile_i + 1) % N_TILES_ROW > 0) items[i].used_tile_i--;
@@ -296,66 +324,16 @@ int main(void)
 					Tile t = tiles[N_TILES_ROW * i + j];
 					if (t.conveyer == FALSE) {
 						if (t.spawner == TRUE) {
-							DrawTextureRec(
-								t.tex, 
-								(Rectangle) {
-									TILE_SIZE * 2 + TILE_SIZE * t.dir, 
-									0, 
-									TILE_SIZE, 
-									TILE_SIZE
-								}, 
-								(Vector2) {j * TILE_SIZE, i * TILE_SIZE}, 
-								GREEN
-							);
+							DrawTile(tile_tex, (Vector2) {j * TILE_SIZE, i * TILE_SIZE}, 6 * TILE_SIZE, 0);
 						} else if (t.collector == TRUE) {
-							DrawTextureRec(
-								t.tex, 
-								(Rectangle) {
-									TILE_SIZE * 2 + TILE_SIZE * t.dir, 
-									0, 
-									TILE_SIZE, 
-									TILE_SIZE
-								}, 
-								(Vector2) {j * TILE_SIZE, i * TILE_SIZE}, 
-								RED
-							);
+							DrawTile(tile_tex, (Vector2) {j * TILE_SIZE, i * TILE_SIZE}, 7 * TILE_SIZE, 0);
 						} else if (t.destroyed == FALSE) {
-							DrawTextureRec(
-								t.tex, 
-								(Rectangle) {
-									0, 
-									0, 
-									TILE_SIZE, 
-									TILE_SIZE
-								}, 
-								(Vector2) {j * TILE_SIZE, i * TILE_SIZE}, 
-								WHITE
-							);
+							DrawTile(tile_tex, (Vector2) {j * TILE_SIZE, i * TILE_SIZE}, 0, t.rand);
 						} else {
-							DrawTextureRec(
-								t.tex, 
-								(Rectangle) {
-									TILE_SIZE, 
-									0, 
-									TILE_SIZE, 
-									TILE_SIZE
-								}, 
-								(Vector2) {j * TILE_SIZE, i * TILE_SIZE}, 
-								WHITE
-							);
+							DrawTile(tile_tex, (Vector2) {j * TILE_SIZE, i * TILE_SIZE}, TILE_SIZE, t.rand);
 						}	
 					} else {
-						DrawTextureRec(
-							t.tex, 
-							(Rectangle) {
-								TILE_SIZE * 2 + TILE_SIZE * t.dir, 
-								0, 
-								TILE_SIZE, 
-								TILE_SIZE
-							}, 
-							(Vector2) {j * TILE_SIZE, i * TILE_SIZE}, 
-							WHITE
-						);
+						DrawTile(tile_tex, (Vector2) {j * TILE_SIZE, i * TILE_SIZE}, TILE_SIZE * 2 + TILE_SIZE * t.dir, t.rand);
 					}	
 				}
 			}
@@ -411,4 +389,32 @@ void ResetItem(int i, Level l) {
 	items[i].dir = tiles[l.spawners[0]].dir;
 	items[i].dest_pos = items[i].pos;
 	items[i].time = 0;
+}
+
+void DrawTile(Texture2D t, Vector2 pos, int offset, int r) {
+	if (offset == 0) {
+		DrawTextureRec(
+			tile_tex, 
+			(Rectangle) {
+				0, 
+				r * TILE_SIZE, 
+				TILE_SIZE, 
+				TILE_SIZE
+			}, 
+			pos,
+			WHITE
+		);
+	} else {
+		DrawTextureRec(
+			t, 
+			(Rectangle) {
+				offset, 
+				0, 
+				TILE_SIZE, 
+				TILE_SIZE
+			}, 
+			pos,
+			WHITE
+		);
+	}
 }
