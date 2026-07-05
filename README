@@ -15,19 +15,20 @@ with each path transporting a different kind of firework.
 Todo:
 [X] Create grid
 	- [X] Scale up resolution of grid
-	- [ ] Toggle tile availability
+	- [X] Toggle tile availability
 [ ] Conveyers
 	- [X] Draw path
 	- [X] Instantiate belts
 	- [X] Destroy belts
-	- [ ] Move crates
+	- [X] Move crates
 [ ] Fireworks/Crates
-	- [ ] Spawn
-	- [ ] Despawn
-	- [ ] Explode
+	- [X] Spawn
+	- [X] Despawn
+	- [X] Explode
+	- [ ] Disarm bomb
 [ ] Win Condition
-	- [ ] Timer
-	- [ ] Counter
+	- [x] Timer
+	- [x] Counter
 	- [ ] Reset Game
 [ ] Menu
 	- [ ] Game State

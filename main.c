@@ -37,20 +37,31 @@ typedef struct {
 	Direction dir;
 	Bool active;
 	Bool bomb;
+	float time;
 } Item;
 
 typedef struct {
 	int spawners[2];
 	int collectors[2];
 	int paths;
+	int difficulty;
 } Level;
+
+void ResetItem(int, Level);
 
 Tile tiles[N_TILES] = {0};
 
 Item items[N_TILES] = {0};
 
-Level level_1 = {.spawners = {20}, .collectors = {200}, .paths = 1};
+Level level_1 = {.spawners = {20}, .collectors = {200}, .paths = 1, .difficulty = 5};
 
+int score;
+float timer;
+float interval;
+Vector2 cursor_pos;
+int active_tile_index;
+int last_active_tile_index;
+float degree;
 
 int main(void)
 {
@@ -75,16 +86,20 @@ int main(void)
 		tiles[i].tex = tile_tex;
 	}
 	
+	SetRandomSeed((int) GetTime());
 	// Load level 1
 	Level cur_level = level_1;
+	score = 0;
+	timer = 0.0f;
+	interval = 0.0f;
+	cursor_pos = (Vector2) {0};
+	active_tile_index = 0;
+	last_active_tile_index = -1;
 	tiles[cur_level.spawners[0]].spawner = TRUE;
 	tiles[cur_level.spawners[0]].dir = NORTH;
 	tiles[cur_level.collectors[0]].collector = TRUE;
 	for (int i = 0; i < N_TILES; i++) {
-		items[i].pos = (Vector2) {cur_level.spawners[0] % N_TILES_ROW * TILE_SIZE, floorf(cur_level.spawners[0] / N_TILES_ROW) * TILE_SIZE};
-		items[i].used_tile_i = cur_level.spawners[0];
-		items[i].dir = tiles[cur_level.spawners[0]].dir;
-		items[i].dest_pos = items[i].pos;
+		ResetItem(i, cur_level);
 		switch (items[i].dir) {
 			case NORTH:
 				items[i].dest_pos.y -= TILE_SIZE; // Because the rendertexture is flipped
@@ -101,16 +116,19 @@ int main(void)
 		}
 	}
 
-	Vector2 cursor_pos = {0};
-	int active_tile_index = 0;
-	int last_active_tile_index = -1;
-
-	float timer = 0.0f;
 
 	while (!WindowShouldClose())
 	{
 		timer += GetFrameTime();
-		if (items[(int) floorf(timer)].active == FALSE) items[(int) floorf(timer)].active = TRUE;
+		interval += GetFrameTime();
+		if (interval > N_TILES) interval -= N_TILES;
+		if (items[(int) floorf(interval)].active == FALSE) {
+			items[(int) floorf(interval)].active = TRUE;
+			if (GetRandomValue(0, cur_level.difficulty) == 0) {
+				items[(int) floorf(interval)].bomb = TRUE;
+				items[(int) floorf(interval)].time = 0;
+			}
+		}
 		if (floorf(timer) > N_TILES) timer = 0.0f;
 
 		if (GetMousePosition().x < WINDOW_WIDTH && GetMousePosition().y < WINDOW_HEIGHT) {
@@ -144,16 +162,43 @@ int main(void)
 			}
 		}
 
-		printf("Debug 2:\n");
-		printf("Pos: %f, %f\n", items[0].pos.x, items[0].pos.y);
-		printf("Dest Pos: %f, %f\n", items[0].dest_pos.x, items[0].dest_pos.y);
-		printf("Guide tile: %d\n", items[0].used_tile_i);
+		// Debug
+		// printf("Debug 2:\n");
+		// printf("Pos: %f, %f\n", items[0].pos.x, items[0].pos.y);
+		// printf("Dest Pos: %f, %f\n", items[0].dest_pos.x, items[0].dest_pos.y);
+		// printf("Guide tile: %d\n", items[0].used_tile_i);
+		// printf("Score: %d\n", score);
 		float dt = GetFrameTime();
 		for (int i = 0; i < N_TILES; i++) {
 			if (items[i].active == TRUE) {
-
+				if (items[i].bomb == TRUE) {
+					items[i].time += GetFrameTime();
+				}
+				// Explode bomb
+				if (items[i].time > 10 && items[i].bomb == TRUE) {
+					// ADD if time allows, a larger area, for now just one tile.
+					// check if out of bounds
+					// if (items[i].used_tile_i - 20)
+					tiles[items[i].used_tile_i].destroyed = TRUE;
+					tiles[items[i].used_tile_i].conveyer = FALSE;
+					printf("Boom!");
+					// tiles[items[i].used_tile_i-1].destroyed = TRUE;
+					// tiles[items[i].used_tile_i-1].conveyer = FALSE;
+					// tiles[items[i].used_tile_i+1].destroyed = TRUE;
+					// tiles[items[i].used_tile_i+1].conveyer = FALSE;
+					// tiles[items[i].used_tile_i+21].destroyed = TRUE;
+					// tiles[items[i].used_tile_i+21].conveyer = FALSE;
+					// tiles[items[i].used_tile_i+20].destroyed = TRUE;
+					// tiles[items[i].used_tile_i+20].conveyer = FALSE;
+					// tiles[items[i].used_tile_i+19].destroyed = TRUE;
+					// tiles[items[i].used_tile_i+19].conveyer = FALSE;
+					// reset item
+					ResetItem(i, cur_level);
+				}
+				// Handle item reaching next node destination
 				if (abs((int) (items[i].dest_pos.x - items[i].pos.x)) < 1 && 
 						abs((int) (items[i].dest_pos.y - items[i].pos.y)) < 1) {
+					// Fix for multiple collectors
 					switch (items[i].dir) {
 						case NORTH:
 							if (items[i].used_tile_i > 19) items[i].used_tile_i -= 20;
@@ -168,6 +213,29 @@ int main(void)
 							if ((items[i].used_tile_i + 1) % N_TILES_ROW > 0) items[i].used_tile_i--;
 							break;
 					}
+					// Handle item over destroyed area
+					if (tiles[items[i].used_tile_i].destroyed == TRUE) {
+						ResetItem(i, cur_level);
+					}
+					// Collect item
+					if (items[i].used_tile_i == cur_level.collectors[0]) {
+						score++;
+						ResetItem(i, cur_level);
+					}
+					// switch (items[i].dir) {
+					// 	case NORTH:
+					// 		items[i].dest_pos.y -= TILE_SIZE; // Because the rendertexture is flipped
+					// 		break;
+					// 	case EAST:
+					// 		items[i].dest_pos.x += TILE_SIZE;
+					// 		break;
+					// 	case SOUTH:
+					// 		items[i].dest_pos.y += TILE_SIZE;
+					// 		break;
+					// 	case WEST:
+					// 		items[i].dest_pos.x -= TILE_SIZE;
+					// 		break;
+					// }
 					items[i].dir = tiles[items[i].used_tile_i].dir;
 					switch (items[i].dir) {
 						case NORTH:
@@ -186,6 +254,7 @@ int main(void)
 							break;
 					}
 				}
+				// Move item
 				Tile t = tiles[items[i].used_tile_i];
 				if (t.conveyer == TRUE || t.spawner == TRUE) {
 					switch (items[i].dir) {
@@ -219,8 +288,6 @@ int main(void)
 
 		BeginTextureMode(target);
 			ClearBackground(CORNFLOWER_BLUE);
-			DrawText("Hello Raylib!", 0, 0, 20, LIGHTGRAY);
-
 			// Draw Tiles
 			// Could simplify drawing code by passing an x value to a drawing function
 			// since that's the only differentiating aspect
@@ -296,10 +363,33 @@ int main(void)
 			// Draw items on conveyers
 			for (int i = 0; i < N_TILES; i++) {
 				if (items[i].active == TRUE) {
-					DrawTexturePro(item_tex, (Rectangle) {0, 0, TILE_SIZE, TILE_SIZE}, (Rectangle) {items[i].pos.x, items[i].pos.y, TILE_SIZE, TILE_SIZE}, (Vector2) { 0, 0 }, 0.0f, WHITE);
+					if (items[i].bomb == FALSE) {
+						switch (items[i].dir) {
+							case NORTH:
+								degree = 0.0f;
+								break;
+							case EAST:
+								degree = 90.0f;
+								break;
+							case SOUTH:
+								degree = 180.0f;
+								break;
+							case WEST:
+								degree = 270.0f;
+								break;
+						}
+
+						// I think turning the texture messes it up a bit, might be rotated
+						// based on the texture, not the source rect.
+						DrawTexturePro(item_tex, (Rectangle) {0, 0, TILE_SIZE, TILE_SIZE}, (Rectangle) {items[i].pos.x, items[i].pos.y, TILE_SIZE, TILE_SIZE}, (Vector2) { 0, 0 }, 0.0f, WHITE);
+					} else {
+						DrawTexturePro(item_tex, (Rectangle) {TILE_SIZE * 3, 0, TILE_SIZE, TILE_SIZE}, (Rectangle) {items[i].pos.x, items[i].pos.y, TILE_SIZE, TILE_SIZE}, (Vector2) { 0, 0 }, 0.0f, WHITE);
+					}
 				}
 			}
-			DrawCircle(cursor_pos.x, cursor_pos.y, 4.0f, RED);
+			// DrawText(TextFormat("Score: %d", score), 0, 0, 20, WHITE);
+			// DrawText(TextFormat("Time: %d", 120 - (int) timer), 0, 24, 20, WHITE);
+			// DrawCircle(cursor_pos.x, cursor_pos.y, 4.0f, RED);
 		EndTextureMode();
 
 		BeginDrawing();
@@ -311,4 +401,14 @@ int main(void)
 	UnloadRenderTexture(target);
 	CloseWindow();
 	return 0;
+}
+
+void ResetItem(int i, Level l) {
+	items[i].used_tile_i = l.spawners[0];
+	items[i].active = FALSE;
+	items[i].pos = (Vector2) {l.spawners[0] % N_TILES_ROW * TILE_SIZE, floorf(l.spawners[0] / N_TILES_ROW) * TILE_SIZE};
+	items[i].used_tile_i = l.spawners[0];
+	items[i].dir = tiles[l.spawners[0]].dir;
+	items[i].dest_pos = items[i].pos;
+	items[i].time = 0;
 }
