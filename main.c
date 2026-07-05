@@ -241,29 +241,11 @@ int main(void)
 							if ((items[i].used_tile_i + 1) % N_TILES_ROW > 0) items[i].used_tile_i--;
 							break;
 					}
-					// Handle item over destroyed area
-					if (tiles[items[i].used_tile_i].destroyed == TRUE) {
-						ResetItem(i, cur_level);
-					}
 					// Collect item
 					if (items[i].used_tile_i == cur_level.collectors[0]) {
 						score++;
 						ResetItem(i, cur_level);
 					}
-					// switch (items[i].dir) {
-					// 	case NORTH:
-					// 		items[i].dest_pos.y -= TILE_SIZE; // Because the rendertexture is flipped
-					// 		break;
-					// 	case EAST:
-					// 		items[i].dest_pos.x += TILE_SIZE;
-					// 		break;
-					// 	case SOUTH:
-					// 		items[i].dest_pos.y += TILE_SIZE;
-					// 		break;
-					// 	case WEST:
-					// 		items[i].dest_pos.x -= TILE_SIZE;
-					// 		break;
-					// }
 					items[i].dir = tiles[items[i].used_tile_i].dir;
 					switch (items[i].dir) {
 						case NORTH:
@@ -281,6 +263,10 @@ int main(void)
 						default:
 							break;
 					}
+				}
+				// Handle item over destroyed area
+				if (tiles[items[i].used_tile_i].destroyed == TRUE) {
+					ResetItem(i, cur_level);
 				}
 				// Move item
 				Tile t = tiles[items[i].used_tile_i];
