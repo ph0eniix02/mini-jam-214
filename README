@@ -13,13 +13,13 @@ direction and which tiles are useable.
 with each path transporting a different kind of firework.
 
 Todo:
-[ ] Create grid
-	- [ ] Scale up resolution of grid
+[X] Create grid
+	- [X] Scale up resolution of grid
 	- [ ] Toggle tile availability
 [ ] Conveyers
-	- [ ] Draw path
-	- [ ] Instantiate belts
-	- [ ] Destroy belts
+	- [X] Draw path
+	- [X] Instantiate belts
+	- [X] Destroy belts
 	- [ ] Move crates
 [ ] Fireworks/Crates
 	- [ ] Spawn
@@ -35,7 +35,7 @@ Todo:
 [ ] Polish
 	- [ ] Art
 		- [ ] Conveyer
-		- [ ] Firework
+		- [X] Firework
 		- [ ] Start/End Point
 		- [ ] Timer
 		- [ ] Buttons
