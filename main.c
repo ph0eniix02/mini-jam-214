@@ -60,7 +60,7 @@ Tile tiles[N_TILES] = {0};
 
 Item items[N_TILES] = {0};
 
-Level level_1 = {.spawners = {20}, .collectors = {171}, .paths = 1, .difficulty = 5};
+Level level_1 = {.spawners = {22}, .collectors = {178}, .paths = 1, .difficulty = 4};
 
 int score;
 float timer;
@@ -78,14 +78,22 @@ Texture2D bottom_bar_tex;
 Direction selected_tile_dir = NORTH;
 
 Texture2D menu_bg_tex;
+Texture2D scorecard_tex;
 
 GameState gs = MENU;
 Level cur_level;
+
+Music caketown;
+Music stage_select;
+Sound explosion;
+Sound pickup;
+Sound placement;
 
 int main(void)
 {
 
 	InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Mini Jam 214");
+	InitAudioDevice();
 	SetTargetFPS(60);
 
 	RenderTexture2D target;
@@ -99,43 +107,45 @@ int main(void)
 
 	menu_bg_tex = LoadTexture("assets/menu_background.png");	
 
+	scorecard_tex = LoadTexture("assets/scorecard.png");
+
 	item_tex = LoadTexture("assets/firework_sprites.png");
 	// Move into seperate TileSetup function?
 	// Could load the texture in one line, but I'm pretty sure it's the same either
 	// way under the hood?
 	tile_img = LoadImage("assets/tile_sprites.png");
 	tile_tex = LoadTextureFromImage(tile_img);
-	for (int i = 0; i < N_TILES; i++) {
-		tiles[i].tex = tile_tex;
-		tiles[i].rand = GetRandomValue(0, 15); 
-		if (tiles[i].rand < 11) {
-			tiles[i].rand = 0;
-		} else if (tiles[i].rand < 12) {
-			tiles[i].rand = 1;
-		} else if (tiles[i].rand < 14) {
-			tiles[i].rand = 2;
-		} else if (tiles[i].rand < 15) {
-			tiles[i].rand = 3;
-		} else {
-			tiles[i].rand = 4;
-		}
-	}
-	
+
+	caketown = LoadMusicStream("assets/caketown.mp3");
+	stage_select = LoadMusicStream("assets/stage_select.wav");
+	SetMusicVolume(stage_select, 0.075);
+	explosion = LoadSound("assets/explosion.wav");
+	pickup = LoadSound("assets/pickup.wav");
+	placement = LoadSound("assets/placement.wav");
+	SetSoundVolume(placement, 0.5);
+	SetSoundVolume(pickup, 0.5);
+
 	SetRandomSeed((int) GetTime());
 
 	// Load level 1
 	LoadLevel(level_1);
 
+	// PlayMusicStream(caketown);
 
 	while (!WindowShouldClose())
 	{
 		while (gs == MENU && !WindowShouldClose()) {
 
+			if (!IsMusicStreamPlaying(caketown)) PlayMusicStream(caketown);
+			UpdateMusicStream(caketown);
 			if (IsKeyPressed(KEY_ENTER)) {
+				StopMusicStream(caketown);
 				// load level
+				LoadLevel(level_1);
 				gs = GAME;
 			}			
 			BeginTextureMode(target);
+				ClearBackground(RAYWHITE);
 				DrawTexture(menu_bg_tex, 0, 0, WHITE);
 			EndTextureMode();
 			BeginDrawing();
@@ -147,6 +157,12 @@ int main(void)
 		while (gs == GAME && !WindowShouldClose()) {
 			timer += GetFrameTime();
 			interval += GetFrameTime();
+
+			if (!IsMusicStreamPlaying(stage_select)) PlayMusicStream(stage_select);
+			UpdateMusicStream(stage_select);
+
+			// REMEMBER TO REMOVE THIS
+			if (timer > TIME || IsKeyPressed(KEY_P)) gs = SCORECARD;
 
 			if (IsKeyPressed(KEY_ONE)) {
 				selected_tile_dir = NORTH;
@@ -175,7 +191,7 @@ int main(void)
 				}
 			}
 
-			if (floorf(timer) > N_TILES) timer = 0.0f;
+			if (floorf(interval) > N_TILES) interval = 0.0f;
 
 			if (GetMousePosition().x < WINDOW_WIDTH && GetMousePosition().y < WINDOW_HEIGHT) {
 				cursor_pos = (Vector2) {GetMousePosition().x / 3, GetMousePosition().y / 3};
@@ -189,10 +205,12 @@ int main(void)
 			if (active_tile_index >= 0 && active_tile_index < N_TILES) {
 				if (tiles[active_tile_index].spawner == FALSE && tiles[active_tile_index].collector == FALSE) {
 					if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON) && active_tile_index != last_active_tile_index && tiles[active_tile_index].conveyer != TRUE && tiles[active_tile_index].destroyed == FALSE) {
+						if (!IsSoundPlaying(placement)) PlaySound(placement);
 						tiles[active_tile_index].conveyer = TRUE;
 						tiles[active_tile_index].dir = selected_tile_dir;
 						last_active_tile_index = active_tile_index;
 					} else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON) && tiles[active_tile_index].conveyer == TRUE) {
+						if (!IsSoundPlaying(placement)) PlaySound(placement);
 						if (tiles[active_tile_index].dir < 3) {
 							tiles[active_tile_index].dir++;
 						} else {
@@ -202,6 +220,7 @@ int main(void)
 					}
 				}
 				if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+					if (!IsSoundPlaying(placement)) PlaySound(placement);
 					if (tiles[active_tile_index].conveyer == TRUE) {
 						tiles[active_tile_index].conveyer = FALSE;
 						last_active_tile_index = active_tile_index;
@@ -276,9 +295,10 @@ int main(void)
 						// }
 					}
 					// Explode bomb
-					if (items[i].time > 10 && items[i].bomb == TRUE) {
+					if (items[i].time > 6 && items[i].bomb == TRUE) {
 						// ADD if time allows, a larger area, for now just one tile.
 						// check if out of bounds
+						PlaySound(explosion);
 						tiles[items[i].used_tile_i].destroyed = TRUE;
 						tiles[items[i].used_tile_i].conveyer = FALSE;
 						// reset item
@@ -307,6 +327,7 @@ int main(void)
 						// Collect item
 						if (items[i].used_tile_i == cur_level.collectors[0]) {
 							if (items[i].bomb == FALSE) {
+								PlaySound(pickup);
 								score++;
 							}
 							ResetItem(i, cur_level);
@@ -338,16 +359,16 @@ int main(void)
 					if (t.conveyer == TRUE || t.spawner == TRUE) {
 						switch (items[i].dir) {
 							case NORTH:
-								items[i].pos.y -= TILE_SIZE * dt; // Because the rendertexture is flipped
+								items[i].pos.y -= TILE_SIZE * 1.5 * dt; // Because the rendertexture is flipped
 								break;
 							case EAST:
-								items[i].pos.x += TILE_SIZE * dt;
+								items[i].pos.x += TILE_SIZE * 1.5 * dt;
 								break;
 							case SOUTH:
-								items[i].pos.y += TILE_SIZE * dt;
+								items[i].pos.y += TILE_SIZE * 1.5 * dt;
 								break;
 							case WEST:
-								items[i].pos.x -= TILE_SIZE * dt;
+								items[i].pos.x -= TILE_SIZE * 1.5 * dt;
 								break;
 							default:
 								break;
@@ -378,7 +399,7 @@ int main(void)
 								DrawTile(tile_tex, (Vector2) {j * TILE_SIZE, i * TILE_SIZE}, (Vector2) {6 * TILE_SIZE, t.dir * TILE_SIZE}, 0);
 							} else if (t.collector == TRUE) {
 								// printf("%d\n", N_TILES_ROW * i + j);
-								printf("%d\n", cur_level.collectors[1]);
+								// printf("%d\n", cur_level.collectors[1]);
 								DrawTile(tile_tex, (Vector2) {j * TILE_SIZE, i * TILE_SIZE}, (Vector2) {7 * TILE_SIZE, 0}, 0);
 							} else if (t.destroyed == FALSE) {
 								DrawTile(tile_tex, (Vector2) {j * TILE_SIZE, i * TILE_SIZE}, (Vector2) {0, 0}, t.rand);
@@ -422,8 +443,8 @@ int main(void)
 					}
 				}
 				DrawTexture(bottom_bar_tex, 0, 160, WHITE);
-				DrawText(TextFormat("Score: %d", score), 0, 160, 12, WHITE);
-				DrawText(TextFormat("Time: %d", TIME - (int) timer), 160, 160, 20, WHITE);
+				// DrawText(TextFormat("Score: %d", score), 16, 160, 12, WHITE);
+				DrawText(TextFormat("%d", TIME - (int) timer), 18, 163, 16, WHITE);
 
 				// if (tiles[(int) floor(cursor_pos.x / TILE_SIZE) + (int) floor(cursor_pos.y / TILE_SIZE) * N_TILES_ROW - 1].conveyer == FALSE) {
 				if (tiles[active_tile_index].conveyer == FALSE && tiles[active_tile_index].spawner == FALSE && tiles[active_tile_index].collector == FALSE){
@@ -436,9 +457,30 @@ int main(void)
 				DrawTexturePro(target.texture, target_src_rec, target_dst_rec, (Vector2) { 0.0f, 0.0f }, 0.0f, WHITE);
 			EndDrawing();
 		}
+
+		while (gs == SCORECARD && !WindowShouldClose()) {
+			if (IsKeyPressed(KEY_ENTER)) {
+				gs = MENU;
+			}
+			BeginTextureMode(target);
+				DrawTexture(scorecard_tex, 112, 16, WHITE);
+				const char* s = TextFormat("%d", score);
+				DrawText(s, SRC_WIDTH / 2 - MeasureText(s, 16) / 2, 64, 16, WHITE);
+			EndTextureMode();
+			BeginDrawing();
+				ClearBackground(RAYWHITE);
+				DrawTexturePro(target.texture, target_src_rec, target_dst_rec, (Vector2) { 0.0f, 0.0f }, 0.0f, WHITE);
+			EndDrawing();
+		}
 	
 	}
+	UnloadMusicStream(caketown);   // Unload music stream buffers from RAM
+	UnloadMusicStream(stage_select);   // Unload music stream buffers from RAM
+	UnloadSound(explosion);
+	UnloadSound(pickup);
+	UnloadSound(placement);
 
+	CloseAudioDevice();         // Close audio device (music streaming is automatically stopped)
 	UnloadRenderTexture(target);
 	CloseWindow();
 	return 0;
@@ -538,6 +580,22 @@ void LoadLevel(Level l) {
 				break;
 			default:
 				break;
+		}
+	}
+
+	for (int i = 0; i < N_TILES; i++) {
+		tiles[i].tex = tile_tex;
+		tiles[i].rand = GetRandomValue(0, 15); 
+		if (tiles[i].rand < 11) {
+			tiles[i].rand = 0;
+		} else if (tiles[i].rand < 12) {
+			tiles[i].rand = 1;
+		} else if (tiles[i].rand < 14) {
+			tiles[i].rand = 2;
+		} else if (tiles[i].rand < 15) {
+			tiles[i].rand = 3;
+		} else {
+			tiles[i].rand = 4;
 		}
 	}
 }

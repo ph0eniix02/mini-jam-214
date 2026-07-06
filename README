@@ -21,17 +21,17 @@ Todo:
 	- [X] Instantiate belts
 	- [X] Destroy belts
 	- [X] Move crates
-[ ] Fireworks/Crates
+[X] Fireworks/Crates
 	- [X] Spawn
 	- [X] Despawn
 	- [X] Explode
 	- [ ] Disarm bomb
-[ ] Win Condition
+[X] Win Condition
 	- [x] Timer
 	- [x] Counter
-	- [ ] Reset Game
+	- [X] Reset Game
 [ ] Menu
-	- [ ] Game State
+	- [X] Game State
 	- [ ] Buttons
 [ ] Polish
 	- [ ] Level 1
@@ -41,9 +41,9 @@ Todo:
 		- [X] Conveyer
 		- [X] Firework
 		- [X] Start/End Point
-		- [ ] Timer
+		- [X] Timer
 		- [ ] Buttons
-		- [ ] Menu Background
+		- [X] Menu Background
 		- [X] Animate fireworks between tiles
 	- [ ] Sound
 		- [ ] SFX
@@ -56,6 +56,6 @@ Todo:
 			- [ ] Level 2
 			- [ ] Level 3
 		- [ ] Menu Music
-	- [ ] Web build
+	- [ ] Web build (During judging period)
 
 Damn. That's a lot
