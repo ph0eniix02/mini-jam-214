@@ -79,6 +79,7 @@ Direction selected_tile_dir = NORTH;
 
 Texture2D menu_bg_tex;
 Texture2D scorecard_tex;
+Texture2D web_start_tex;
 
 GameState gs = MENU;
 Level cur_level;
@@ -109,6 +110,8 @@ int main(void)
 
 	scorecard_tex = LoadTexture("assets/scorecard.png");
 
+	web_start_tex = LoadTexture("assets/web_start.png");
+
 	item_tex = LoadTexture("assets/firework_sprites.png");
 	// Move into seperate TileSetup function?
 	// Could load the texture in one line, but I'm pretty sure it's the same either
@@ -134,6 +137,19 @@ int main(void)
 
 	while (!WindowShouldClose())
 	{
+		while (!WindowShouldClose()) {
+			if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+				break;
+			}
+			BeginTextureMode(target);
+				ClearBackground(RAYWHITE);
+				DrawTexture(web_start_tex, 0, 0, WHITE);
+			EndTextureMode();
+			BeginDrawing();
+				ClearBackground(RAYWHITE);
+				DrawTexturePro(target.texture, target_src_rec, target_dst_rec, (Vector2) { 0.0f, 0.0f }, 0.0f, WHITE);
+			EndDrawing();
+		}
 		while (gs == MENU && !WindowShouldClose()) {
 
 			if (!IsMusicStreamPlaying(caketown)) PlayMusicStream(caketown);
